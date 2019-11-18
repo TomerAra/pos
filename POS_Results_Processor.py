@@ -6,6 +6,7 @@ import csv
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import numpy as np
+import statistics
 from statistics import mean
 from matplotlib.offsetbox import AnchoredText
 
@@ -188,7 +189,7 @@ def PlotParticipatsStartEndRelativeTokensHist(config, figure_num):
     ax.set_title('Mean relative weights - Start vs End')
     ax.set_xticks(x)
     ax.set_xticklabels(labels)
-    ax.legend()
+    ax.legend(loc = "lower right")
     
     autolabel(rects1, ax)
     autolabel(rects2, ax)
@@ -197,16 +198,84 @@ def PlotParticipatsStartEndRelativeTokensHist(config, figure_num):
     props = dict(boxstyle='round', facecolor='orange', alpha=0.5)
     
     # place a text box in upper left in axes coords
-    plt.text(-0.30, 1.15, textstr, transform=ax.transAxes, fontsize=7,
+    plt.text(-0.30, 1.15, textstr, transform=ax.transAxes, fontsize=9,
         verticalalignment='top', bbox=props)
         
     fig.tight_layout()
     
-
+# prints the standart deviation of each participant of the final number of tokens for each experiment
+def PlotSTD_P(config, figure_num):
+    STD = []
+    labels = []
+    for j in range(config.p_num):
+        labels.append("p"+str(j+1))
+        STD.append(statistics.stdev(config.final_tokens_arr[j]))
+    
+    
+    x = np.arange(len(labels))  # the label locations
+    width = 0.35  # the width of the bars
+    
+    fig, ax = plt.subplots()
+    rects1 = ax.bar(x - width/2, STD, width, label='Standard Deviation - each participant')
+    
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    ax.set_ylabel('Standard Deviation')
+    ax.set_title('Standard Deviation of each participant')
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.legend(loc = "lower right")
+    
+    autolabel(rects1, ax)
+    
+    textstr = "Number of participants: {}\nRounds per dividend: {}\nSeed: {}\nNumber of rounds per experiment: {}\nNumber of experiments: {}\nNumber of coins initiated for each participant: {}\nNumber of coins per winning: {} ".format(config.p_num,config.epoch,config.rand_seed,config.rounds_num,config.exp_num,config.start_coins,config.win_size)
+    props = dict(boxstyle='round', facecolor='orange', alpha=0.5)
+    
+    # place a text box in upper left in axes coords
+    plt.text(-0.30, 1.15, textstr, transform=ax.transAxes, fontsize=9,
+        verticalalignment='top', bbox=props)
+        
+    fig.tight_layout()
+    
+# prints the standart deviation of all the participants for each experiment
+def PlotSTD_ALL(config, figure_num):
+    STD_all = []
+    labels = []
+    temp_arr = [0]*config.p_num   
+    for i in range (config.exp_num):
+        labels.append("exp"+str(i+1))
+        for j in range(config.p_num):
+            temp_arr[j]=config.final_tokens_arr[j][i]
+        STD_all.append(statistics.stdev(temp_arr))
+    
+    x = np.arange(len(labels))  # the label locations
+    width = 0.35  # the width of the bars
+    
+    fig, ax = plt.subplots()
+    rects1 = ax.bar(x - width/2, STD_all, width, label='Standard Deviation - each experiment')
+    
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    ax.set_ylabel('Standard Deviation')
+    ax.set_title('Standard Deviation of each experiment')
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.legend(loc = "lower right")
+    
+    autolabel(rects1, ax)
+    
+    textstr = "Number of participants: {}\nRounds per dividend: {}\nSeed: {}\nNumber of rounds per experiment: {}\nNumber of experiments: {}\nNumber of coins initiated for each participant: {}\nNumber of coins per winning: {} ".format(config.p_num,config.epoch,config.rand_seed,config.rounds_num,config.exp_num,config.start_coins,config.win_size)
+    props = dict(boxstyle='round', facecolor='orange', alpha=0.5)
+    
+    # place a text box in upper left in axes coords
+    plt.text(-0.30, 1.15, textstr, transform=ax.transAxes, fontsize=9,
+        verticalalignment='top', bbox=props)
+        
+    fig.tight_layout()
     
     
 #PlotParticipantTokensHist(curr_config, 1, 1)
 #PlotParticipantRelativeTokens(curr_config, 1, 2)
+PlotSTD_P(curr_config, 1)
+PlotSTD_ALL(curr_config, 2)
 PlotParticipatsStartEndRelativeTokensHist(curr_config, 3)
 plt.show()
 
