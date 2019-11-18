@@ -114,8 +114,12 @@ def PlotParticipantTokensHist(config, p, figure_num):
     props = dict(boxstyle='round', facecolor='orange', alpha=0.5)
     
     # place a text box in upper left in axes coords
-    plt.text(0.02, 0.98, textstr, transform=ax.transAxes, fontsize=9,
+    plt.text(-0.30, 1.15, textstr, transform=ax.transAxes, fontsize=7,
         verticalalignment='top', bbox=props)
+    
+    ###text_box = AnchoredText(props, frameon=True, loc=2, pad=0.5)
+    ###plt.setp(text_box.patch, facecolor='white', alpha=0.5)
+    ###ax.add_artist(text_box)
     
     #plt.show()
 	
@@ -141,29 +145,10 @@ def PlotParticipantRelativeTokens(config, p, figure_num):
     props = dict(boxstyle='round', facecolor='orange', alpha=0.5)
     
     # place a text box in upper left in axes coords
-    plt.text(0.02, 0.98, textstr, transform=ax.transAxes, fontsize=9,
+    plt.text(-0.30, 1.15, textstr, transform=ax.transAxes, fontsize=7,
         verticalalignment='top', bbox=props)
         
     #plt.show()
-
-#### prints a given participant RELATIVE tokens histogram ((final tokens)/(total tokens) for each experiment )
-###def PlotParticipantRelativeTokensHist(exp_num, p, final_tokens_arr, p_num, rounds_num, figurexp_num):
-###    exp_arr = []
-###    rel_weight = []
-###    total_tokens = (p_num*start_coins) + (rounds_num*win_size)
-###    for i in range(exp_num):
-###        exp_arr.append(i)
-###        rel_weight.append((final_tokens_arr[p][i])/total_tokens)
-###    plt.figure(figurexp_num)
-###    #plt.plot(exp_arr, rel_weight, 'b')
-###    plt.hist(rel_weight, bins=exp_num)
-###    plt.xlabel('Experiment')
-###    plt.ylabel('$\dfrac{Final\ tokens}{Total\ tokens}$')
-###    plt.title('$\dfrac{Final\ tokens}{Total\ tokens}$ ' + 'for each experiment for participant {}\n\n mean value is {}\
-###    \n\n Total tokens: {}'.format(p, mean(rel_weight), total_tokens))
-###    plt.grid(True)
-###	
-###    #plt.show()
 
 def autolabel(rects, ax):
     """Attach a text label above each bar in *rects*, displaying its height."""
@@ -212,7 +197,7 @@ def PlotParticipatsStartEndRelativeTokensHist(config, figure_num):
     props = dict(boxstyle='round', facecolor='orange', alpha=0.5)
     
     # place a text box in upper left in axes coords
-    plt.text(0.02, 0.98, textstr, transform=ax.transAxes, fontsize=9,
+    plt.text(-0.30, 1.15, textstr, transform=ax.transAxes, fontsize=7,
         verticalalignment='top', bbox=props)
         
     fig.tight_layout()
@@ -220,9 +205,8 @@ def PlotParticipatsStartEndRelativeTokensHist(config, figure_num):
 
     
     
-PlotParticipantTokensHist(curr_config, 1, 1)
-PlotParticipantRelativeTokens(curr_config, 1, 2)
-###PlotParticipantRelativeTokensHist(curr_config.exp_num, 1, curr_config.final_tokens_arr, curr_config.p_num, curr_config.rounds_num, 3)
+#PlotParticipantTokensHist(curr_config, 1, 1)
+#PlotParticipantRelativeTokens(curr_config, 1, 2)
 PlotParticipatsStartEndRelativeTokensHist(curr_config, 3)
 plt.show()
 

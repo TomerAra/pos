@@ -9,7 +9,7 @@ import os.path
 
 
 Participant = namedtuple("Participant", ["Name", 'Tokens'])
-U_resolution = 10000
+U_resolution = 1000000
 
 ################################### START ARGUMENTS ###################################
 
@@ -37,7 +37,7 @@ configurations_list = []
 ## configuration template is:
 ## configuration = [p_num, epoch, rounds_num, exp_num, win_size, start_coins]
 
-configurations_list.append([10, 1, 100, 10, 1, 1])
+configurations_list.append([10, 1, 100, 10000, 1, 1])
 # configurations_list[1] = [10, 1, 100, 100, 1, 100]
 
 number_of_configurations = 1
@@ -137,13 +137,13 @@ class Configuration:
     
     # check if a simulation has aleardy ran with this configuration (if the matched CSV file exsits)
     def Check_if_exists(self):
-        file_name = '{:03}_{:03}_{:03}_{:03}_{:03}_{:03}_{:03}.csv'.format(self.p_num,self.epoch,self.rounds_num,self.exp_num,self.win_size,self.start_coins,rand_seed)
+        file_name = '{:05}_{:05}_{:05}_{:05}_{:05}_{:05}_{:05}.csv'.format(self.p_num,self.epoch,self.rounds_num,self.exp_num,self.win_size,self.start_coins,rand_seed)
         return os.path.isfile(file_name)
     
     
     # writes the results of the simulation with this configuration to a CSV file
     def ResultsToCSV(self):
-        file_name = '{:03}_{:03}_{:03}_{:03}_{:03}_{:03}_{:03}.csv'.format(self.p_num,self.epoch,self.rounds_num,self.exp_num,self.win_size,self.start_coins,rand_seed)
+        file_name = '{:05}_{:05}_{:05}_{:05}_{:05}_{:05}_{:05}.csv'.format(self.p_num,self.epoch,self.rounds_num,self.exp_num,self.win_size,self.start_coins,rand_seed)
         with open(file_name, 'w', newline='') as results_file:
             results_writer = csv.writer(results_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
@@ -214,7 +214,7 @@ for c in tqdm(range(number_of_configurations)):
     # reset for this configuration    
     del curr_config
 
-print("\nFinish:")
+print("\nFinish!")
 
 
 
