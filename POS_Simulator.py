@@ -37,10 +37,13 @@ configurations_list = []
 ## configuration template is:
 ## configuration = [p_num, epoch, rounds_num, exp_num, win_size, start_coins]
 
-configurations_list.append([10, 1, 100, 100, 1, 1])
+configurations_list.append([10, 1, 250, 100, 1, 1])
+configurations_list.append([10, 1, 300, 100, 1, 1])
+configurations_list.append([10, 1, 150, 100, 1, 1])
+configurations_list.append([10, 1, 200, 100, 1, 1])
 # configurations_list[1] = [10, 1, 100, 100, 1, 100]
 
-number_of_configurations = 1
+number_of_configurations = len(configurations_list)
 
 ################################### END CONFIGURATIONS ###################################
 
@@ -51,12 +54,6 @@ def RandomUselect(U_resolution):
         
     
 class Configuration:
-    P_arr = []
-    P_weights_arr = []
-    Dividends_arr = []
-    final_tokens_arr = []
-    seeds_list = []
-    TotalTokens = 0
     
     def __init__(self, p_num, epoch, rounds_num, exp_num, win_size, start_coins):
         self.p_num = p_num
@@ -65,6 +62,12 @@ class Configuration:
         self.exp_num = exp_num
         self.win_size = win_size
         self.start_coins = start_coins
+        self.P_arr = []
+        self.P_weights_arr = []
+        self.Dividends_arr = []
+        self.final_tokens_arr = []
+        self.seeds_list = []
+        self.TotalTokens = 0
     
     # initializing P_arr with Tokens=start_coins and Dividends_arr and P_weights_arr with zeros
     def InitSimulation(self):
@@ -179,6 +182,9 @@ for c in tqdm(range(number_of_configurations)):
     configurations_list[c][3], # exp_num
     configurations_list[c][4], # win_size
     configurations_list[c][5])  # start_coins
+    
+    #print("\nParameters:")
+    #print("Number of participants: {}\nRounds per dividend: {}\nSeed: {}\nNumber of rounds per experiment: {}\nNumber of experiments: {}\nNumber of coins initiated for each participant: {}\nNumber of coins per winning: {} ".format(curr_config.p_num,curr_config.epoch,rand_seed,curr_config.rounds_num,curr_config.exp_num,curr_config.start_coins,curr_config.win_size))
     
     # checking if this simulation already happened (if so, pass to the next configuration)
     if curr_config.Check_if_exists():

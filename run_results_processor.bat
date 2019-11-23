@@ -1,1 +1,1 @@
-py POS_Results_Processor.py -fname 00010_00001_00100_00100_00001_00001_00003.csv
+py POS_Results_Processor.py
