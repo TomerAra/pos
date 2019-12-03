@@ -41,6 +41,7 @@ configurations_list.append([10, 1, 250, 100, 1, 1])
 configurations_list.append([10, 1, 300, 100, 1, 1])
 configurations_list.append([10, 1, 150, 100, 1, 1])
 configurations_list.append([10, 1, 200, 100, 1, 1])
+configurations_list.append([2, 50, 1000, 100, 1, 1])
 # configurations_list[1] = [10, 1, 100, 100, 1, 100]
 
 number_of_configurations = len(configurations_list)

@@ -33,8 +33,7 @@ class Configuration:
 
 # We will create a list of Configurations types.
 # A loop will go over all the CSV files (list of strings holding the files' names) and create the Configurations and add them to the list. 
-CSV_files_list = ['00010_00001_00200_00100_00001_00001_00034','00010_00001_00300_00100_00001_00001_00034',
-'00010_00001_00150_00100_00001_00001_00034','00010_00001_00250_00100_00001_00001_00034'] 
+CSV_files_list = ['00002_00050_01000_00100_00001_00001_00034'] 
 CSV_files_num = len(CSV_files_list)
 
 Config_list = []
@@ -204,7 +203,7 @@ def PlotSTD_P(config, figure_num):
     width = 0.35  # the width of the bars
     
     fig, ax = plt.subplots()
-    rects1 = ax.bar(x - width/2, STD, width, label='Standard Deviation - each participant')
+    rects1 = ax.bar(x, STD, width, label='Standard Deviation - each participant')
     
     # Add some text for labels, title and custom x-axis tick labels, etc.
     ax.set_ylabel('Standard Deviation')
@@ -443,14 +442,16 @@ def P_AvgSTD_RoundNum(Configs_list, p, figure_num):
         
     fig.tight_layout()
 
+
+    
 ### PlotParticipantTokensHist(curr_config, 1, 1)
 ### PlotParticipantRelativeTokens(curr_config, 1, 2)
 PlotSTD_P(Config_list[0], 1)
 ### PlotSTD_ALL(curr_config, 2)
 PlotParticipatsStartEndRelativeTokensHist(Config_list[0], 2)
-PlotMinMaxAvgSTD_ExpNum(Config_list, 3)
-PlotMinMaxAvgSTD_RoundNum(Config_list, 4)
-P_AvgSTD_RoundNum(Config_list,1, 5)
+## PlotMinMaxAvgSTD_ExpNum(Config_list, 3)
+## PlotMinMaxAvgSTD_RoundNum(Config_list, 4)
+## P_AvgSTD_RoundNum(Config_list,1, 5)
 plt.show()
 
 
