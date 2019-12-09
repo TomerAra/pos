@@ -8,7 +8,10 @@ from tqdm import tqdm
 import numpy as np
 import statistics
 from statistics import mean
+import glob
 from matplotlib.offsetbox import AnchoredText
+
+Debug = False
 
 class Configuration:    
     
@@ -30,64 +33,7 @@ class Configuration:
         for i in range(0, len(p_tokens_list)): 
             self.final_tokens_arr[p].append(int(p_tokens_list[i]))
         
-
-# We will create a list of Configurations types.
-# A loop will go over all the CSV files (list of strings holding the files' names) and create the Configurations and add them to the list. 
-CSV_files_list = ['00010_00001_00200_00100_00001_00001_00034','00010_00001_00150_00100_00001_00001_00034','00010_00001_00300_00100_00001_00001_00034',
-                    '00010_00001_00250_00100_00001_00001_00034'] 
-CSV_files_num = len(CSV_files_list)
-
-Config_list = []
-      
-for file_name in CSV_files_list:
-    p_ = 0
-    is_config_created = 0 #unlock
-    with open(file_name+'.csv') as csvfile:
-        readCSV = csv.reader(csvfile, delimiter=',')
-        for row in readCSV:
-            if row[0]=="Parameters:":
-                continue
-            elif row[0]=="Participants number":
-                p_num = int(row[1])
-                continue
-            elif row[0]=="Rounds before dividend":
-                epoch = int(row[1])
-                continue
-            elif row[0]=="Rounds per experiment":
-                rounds_num = int(row[1])
-                continue
-            elif row[0]=="Experiments number":
-                exp_num = int(row[1])
-                continue
-            elif row[0]=="Winning size":
-                win_size = int(row[1])
-                continue
-            elif row[0]=="Start coins number":
-                start_coins = int(row[1])
-                continue
-            elif row[0]=="Random seed":
-                rand_seed = int(row[1])
-                continue
-            elif row[0]=="Final tokens for each participant at each experiment:":
-                continue
-            # after parsing all the parameters - initiate the configuration class instance
-            if is_config_created==0:
-                is_config_created = 1 #lock
-                curr_config = Configuration(
-                    p_num, # p_num
-                    epoch, # epoch
-                    rounds_num, # rounds_num
-                    exp_num, # exp_num
-                    win_size, # win_size
-                    start_coins, # start_coins
-                    rand_seed)  # rand_seed
-            
-            if row[0][0]=="p":
-                tmp_str = row[1][1:len(row[1])-1] 
-                curr_config.FinalTArray_init(p_, list(tmp_str.split(", ")))
-                p_ += 1
-               
-    Config_list.append(curr_config) 
+     
     
 def Exp_num(elem):
     return elem.exp_num
@@ -95,50 +41,13 @@ def Exp_num(elem):
 def Rounds_num(elem):
     return elem.rounds_num
     
-# prints a given participant tokens histogram (final tokens for each experiment)
-def PlotParticipantTokensHist(config, p, figure_num):
-    exp_arr = []
-    for i in range(config.exp_num):
-        exp_arr.append(i)
-    plt.figure(figure_num)
-    ax = plt.subplot()
-    ax.plot(exp_arr, config.final_tokens_arr[p], 'g')
-    plt.xlabel('Experiment')
-    plt.ylabel('Final tokens')
-    plt.title('Final tokens for each experiment for participant {}\n\n mean value is {}'.format(p, mean(config.final_tokens_arr[p])))
-    plt.grid(True)
+def Epoch_size(elem):
+    return elem.epoch
     
-    textstr = "Number of participants: {}\nRounds per dividend: {}\nSeed: {}\nNumber of rounds per experiment: {}\nNumber of experiments: {}\nNumber of coins initiated for each participant: {}\nNumber of coins per winning: {} ".format(p_num,epoch,rand_seed,rounds_num,exp_num,start_coins,win_size)
-    props = dict(boxstyle='round', facecolor='orange', alpha=0.5)
+def column(matrix, i):
+    return [row[i] for row in matrix]
     
-    # place a text box in upper left in axes coords
-    plt.text(-0.30, 1.15, textstr, transform=ax.transAxes, fontsize=7,
-        verticalalignment='top', bbox=props)
     
-# prints a given participant RELATIVE tokens ((final tokens)/(total tokens) for each experiment )
-def PlotParticipantRelativeTokens(config, p, figure_num):
-    exp_arr = []
-    rel_weight = []
-    total_tokens = (config.p_num*config.start_coins) + (config.rounds_num*config.win_size)
-    for i in range(config.exp_num):
-        exp_arr.append(i)
-        rel_weight.append((config.final_tokens_arr[p][i])/total_tokens)
-    plt.figure(figure_num)
-    ax = plt.subplot()
-    ax.plot(exp_arr, rel_weight, 'b')
-    #plt.hist(rel_weight, bins=exp_num)
-    plt.xlabel('Experiment')
-    plt.ylabel('$\dfrac{Final\ tokens}{Total\ tokens}$')
-    plt.title('$\dfrac{Final\ tokens}{Total\ tokens}$ ' + 'for each experiment for participant {}\n\n mean value is {}\
-    \n\n Total tokens: {}'.format(p, "%.3f" % mean(rel_weight), total_tokens))
-    plt.grid(True)
-
-    textstr = "Number of participants: {}\nRounds per dividend: {}\nSeed: {}\nNumber of rounds per experiment: {}\nNumber of experiments: {}\nNumber of coins initiated for each participant: {}\nNumber of coins per winning: {} ".format(config.p_num,config.epoch,config.rand_seed,config.rounds_num,config.exp_num,config.start_coins,config.win_size)
-    props = dict(boxstyle='round', facecolor='orange', alpha=0.5)
-    
-    # place a text box in upper left in axes coords
-    plt.text(-0.30, 1.15, textstr, transform=ax.transAxes, fontsize=7,
-        verticalalignment='top', bbox=props)
     
 def autolabel(rects, ax):
     """Attach a text label above each bar in *rects*, displaying its height."""
@@ -190,7 +99,8 @@ def PlotParticipatsStartEndRelativeTokensHist(config, figure_num):
         verticalalignment='top', bbox=props)
         
     fig.tight_layout()
-    
+  
+  
 # prints the standart deviation of each participant of the final number of tokens for each experiment
 def PlotSTD_P(config, figure_num):
     STD = []
@@ -224,40 +134,6 @@ def PlotSTD_P(config, figure_num):
         
     fig.tight_layout()
     
-# prints the standart deviation of all the participants for each experiment
-def PlotSTD_ALL(config, figure_num):
-    STD_all = []
-    labels = []
-    temp_arr = [0]*config.p_num   
-    for i in range (config.exp_num):
-        labels.append("exp"+str(i+1))
-        for j in range(config.p_num):
-            temp_arr[j]=config.final_tokens_arr[j][i]
-        STD_all.append(statistics.stdev(temp_arr))
-    
-    x = np.arange(len(labels))  # the label locations
-    width = 0.35  # the width of the bars
-    
-    fig, ax = plt.subplots()
-    rects1 = ax.bar(x - width/2, STD_all, width, label='Standard Deviation - each experiment')
-    
-    # Add some text for labels, title and custom x-axis tick labels, etc.
-    ax.set_ylabel('Standard Deviation')
-    ax.set_title('Standard Deviation of each experiment')
-    ax.set_xticks(x)
-    ax.set_xticklabels(labels)
-    ax.legend(loc = "lower right")
-    
-    autolabel(rects1, ax)
-    
-    textstr = "Number of participants: {}\nRounds per dividend: {}\nSeed: {}\nNumber of rounds per experiment: {}\nNumber of experiments: {}\nNumber of coins initiated for each participant: {}\nNumber of coins per winning: {} ".format(config.p_num,config.epoch,config.rand_seed,config.rounds_num,config.exp_num,config.start_coins,config.win_size)
-    props = dict(boxstyle='round', facecolor='orange', alpha=0.5)
-    
-    # place a text box in upper left in axes coords
-    plt.text(-0.30, 1.15, textstr, transform=ax.transAxes, fontsize=9,
-        verticalalignment='top', bbox=props)
-        
-    fig.tight_layout()
     
 # prints the min, max and average STD of the participants as function of the exp_num of the simulation
 # Note: can work only if there's more than one configuration 
@@ -302,7 +178,7 @@ def PlotMinMaxAvgSTD_ExpNum(Configs_list, figure_num):
     # Add some text for labels, title and custom x-axis tick labels, etc.
     ax.set_ylabel('STD')
     ax.set_xlabel('Number of Experiments')
-    ax.set_title('Min,Avg,Max STD values as function of exp_num')
+    ax.set_title('Min,Avg,Max STD values as function of exp_num (Normalized)')
     ax.set_xticks(x)
     ax.set_xticklabels(labels)
     ax.legend(loc = "lower right")
@@ -311,7 +187,7 @@ def PlotMinMaxAvgSTD_ExpNum(Configs_list, figure_num):
     autolabel(rects2, ax)
     autolabel(rects3, ax)
     
-    textstr = "Number of participants: {}\nRounds per dividend: {}\nSeed: {}\nNumber of rounds per experiment: {}\nNumber of experiments: {}\nNumber of coins initiated for each participant: {}\nNumber of coins per winning: {} ".format(config.p_num,config.epoch,config.rand_seed,config.rounds_num,config.exp_num,config.start_coins,config.win_size)
+    textstr = "Number of participants: {}\nRounds per dividend: {}\nSeed: {}\nNumber of rounds per experiment: {}\nNumber of coins initiated for each participant: {}\nNumber of coins per winning: {} ".format(config.p_num,config.epoch,config.rand_seed,config.rounds_num,config.start_coins,config.win_size)
     props = dict(boxstyle='round', facecolor='orange', alpha=0.5)
     
     # place a text box in upper left in axes coords
@@ -319,7 +195,8 @@ def PlotMinMaxAvgSTD_ExpNum(Configs_list, figure_num):
         verticalalignment='top', bbox=props)
         
     fig.tight_layout()
-    
+   
+   
 # prints the min, max and average STD of the participants as function of the Rounds per experiment of the simulation
 # Note: can work only if there's more than one configuration 
 def PlotMinMaxAvgSTD_RoundNum(Configs_list, figure_num):
@@ -347,9 +224,10 @@ def PlotMinMaxAvgSTD_RoundNum(Configs_list, figure_num):
         # creating a list of all STDs of this config
         for j in range(config.p_num):
             STD.append(statistics.stdev(config.final_tokens_arr[j]))
-        min_STDs.append(min(STD))
-        max_STDs.append(max(STD))
-        avg_STDs.append(mean(STD))
+        total_tokens = sum(column(config.final_tokens_arr, 0))
+        min_STDs.append((min(STD))/total_tokens)
+        max_STDs.append((max(STD))/total_tokens)
+        avg_STDs.append((mean(STD))/total_tokens)
         STD.clear()
     
     x = np.arange(len(labels))  # the label locations
@@ -363,7 +241,7 @@ def PlotMinMaxAvgSTD_RoundNum(Configs_list, figure_num):
     # Add some text for labels, title and custom x-axis tick labels, etc.
     ax.set_ylabel('STD')
     ax.set_xlabel('Number of Rounds (per experiment)')
-    ax.set_title('Min,Avg,Max STD values as function of rounds_num')
+    ax.set_title('Min,Avg,Max STD values as function of rounds_num (Normalized)')
     ax.set_xticks(x)
     ax.set_xticklabels(labels)
     ax.legend(loc = "lower right")
@@ -372,7 +250,7 @@ def PlotMinMaxAvgSTD_RoundNum(Configs_list, figure_num):
     autolabel(rects2, ax)
     autolabel(rects3, ax)
     
-    textstr = "Number of participants: {}\nRounds per dividend: {}\nSeed: {}\nNumber of rounds per experiment: {}\nNumber of experiments: {}\nNumber of coins initiated for each participant: {}\nNumber of coins per winning: {} ".format(config.p_num,config.epoch,config.rand_seed,config.rounds_num,config.exp_num,config.start_coins,config.win_size)
+    textstr = "Number of participants: {}\nRounds per dividend: {}\nSeed: {}\nNumber of experiments: {}\nNumber of coins initiated for each participant: {}\nNumber of coins per winning: {} ".format(config.p_num,config.epoch,config.rand_seed,config.exp_num,config.start_coins,config.win_size)
     props = dict(boxstyle='round', facecolor='orange', alpha=0.5)
     
     # place a text box in upper left in axes coords
@@ -381,9 +259,10 @@ def PlotMinMaxAvgSTD_RoundNum(Configs_list, figure_num):
         
     fig.tight_layout()
 
+    
 # prints the mean and STD of the a specific participant & exp_num as function of the Rounds per experiment of the simulation
 # Note: can work only if there's more than one configuration 
-def P_AvgSTD_RoundNum(Configs_list, p, figure_num):
+def P_Avg_and_STD_RoundNum(Configs_list, p, figure_num):
     # checking if there is more than one config
     if CSV_files_num <= 1:
         print("Can't generate MaxMinAvg STD graph - Not enough CSV files.")
@@ -409,12 +288,27 @@ def P_AvgSTD_RoundNum(Configs_list, p, figure_num):
             return
         tmp_rounds_num = config.rounds_num
         if tmp_rounds_num in used_rounds_nums:
+            if Debug is True:
+                print("one used round_num")
             continue
+            
         used_rounds_nums.append(tmp_rounds_num)
         labels.append(str(tmp_rounds_num))
         # creating a list of all STDs of this config
-        STD.append(statistics.stdev(config.final_tokens_arr[p]))
-        avg.append(statistics.mean(config.final_tokens_arr[p]))
+        total_tokens = sum(column(config.final_tokens_arr, 0))
+        STD.append((statistics.stdev(config.final_tokens_arr[p]))/total_tokens)
+        avg.append((statistics.mean(config.final_tokens_arr[p]))/total_tokens)
+        
+        if Debug is True:
+            print("this config rounds_num is: {}".format(config.rounds_num))
+            print("this config avg is: {}".format(statistics.mean(config.final_tokens_arr[p])))
+            print("this config min value is: {}, max value is: {}".format(min(config.final_tokens_arr[p]), max(config.final_tokens_arr[p])))
+            print("this is the total tokens: {}".format(sum(column(config.final_tokens_arr, 0))))
+            print("length of final_tokens_arr[p] is: {}".format(len(config.final_tokens_arr[p])))
+            
+    
+    if Debug is True:
+        print(avg)
     
     x = np.arange(len(labels))  # the label locations
     width = 0.10  # the width of the bars
@@ -434,7 +328,7 @@ def P_AvgSTD_RoundNum(Configs_list, p, figure_num):
     autolabel(rects1, ax)
     autolabel(rects2, ax)
     
-    textstr = "Number of participants: {}\nRounds per dividend: {}\nSeed: {}\nNumber of rounds per experiment: {}\nNumber of experiments: {}\nNumber of coins initiated for each participant: {}\nNumber of coins per winning: {} ".format(config.p_num,config.epoch,config.rand_seed,config.rounds_num,config.exp_num,config.start_coins,config.win_size)
+    textstr = "Number of participants: {}\nRounds per dividend: {}\nSeed: {}\nNumber of experiments: {}\nNumber of coins initiated for each participant: {}\nNumber of coins per winning: {} ".format(config.p_num,config.epoch,config.rand_seed,config.exp_num,config.start_coins,config.win_size)
     props = dict(boxstyle='round', facecolor='orange', alpha=0.5)
     
     # place a text box in upper left in axes coords
@@ -444,17 +338,162 @@ def P_AvgSTD_RoundNum(Configs_list, p, figure_num):
     fig.tight_layout()
 
 
+# prints the average STD of the participants FOR MORE THAN ONE EPOCH as function of the exp_num of the simulation
+# Note: can work only if there's more than one configuration 
+def PlotAvgSTD_ExpNum_Epoch(Configs_list, figure_num):
+    # checking if there is more than one config
+    if CSV_files_num <= 1:
+        print("Can't generate MaxMinAvg STD graph - Not enough CSV files.")
+        sys.exit()
     
-### PlotParticipantTokensHist(curr_config, 1, 1)
-### PlotParticipantRelativeTokens(curr_config, 1, 2)
-### PlotSTD_ALL(curr_config, 2)
+    labels = []
+    STD = []
+    used_exp_nums = []
+    
+    # define the epochs you want to plot
+    epoch1 = 1
+    epoch2 = 5
+    epoch3 = 10
+    
+    epoch1_avg_STDs = []
+    epoch2_avg_STDs = []
+    epoch3_avg_STDs = []
+    
+    # sort the Configs_list by the key of exp_num
+    Configs_list.sort(key=Exp_num)
+    
+    for config in Config_list:
+        tmp_exp_num = config.exp_num
+        if tmp_exp_num not in used_exp_nums:
+            labels.append(str(tmp_exp_num))
+            used_exp_nums.append(tmp_exp_num)
+        
+        # creating a list of all STDs of this config
+        for j in range(config.p_num):
+            STD.append(statistics.stdev(config.final_tokens_arr[j]))
+        if (config.epoch == epoch1):
+            epoch1_avg_STDs.append(mean(STD))
+        elif (config.epoch == epoch2):
+            epoch2_avg_STDs.append(mean(STD))
+        elif (config.epoch == epoch3):
+            epoch3_avg_STDs.append(mean(STD))
+        STD.clear()
+    
+    if Debug is True:
+        print(len(labels))
+        print(len(used_exp_nums))
+        print(len(epoch1_avg_STDs))
+        print(len(epoch2_avg_STDs))
+        print(len(epoch3_avg_STDs))
+    
+    x = np.arange(len(labels))  # the label locations
+    width = 0.10  # the width of the bars
+    
+    label_name1 = 'Avg STD - epoch={}'.format(epoch1)
+    label_name2 = 'Avg STD - epoch={}'.format(epoch2)
+    label_name3 = 'Avg STD - epoch={}'.format(epoch3)
+    
+    fig, ax = plt.subplots()
+    rects1 = ax.bar(x - 3*width/2, epoch1_avg_STDs, width, label=label_name1)
+    rects2 = ax.bar(x - width/2, epoch2_avg_STDs, width, label=label_name2)
+    rects3 = ax.bar(x + width/2, epoch3_avg_STDs, width, label=label_name3)
+    
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    ax.set_ylabel('STD')
+    ax.set_xlabel('Number of Experiments')
+    ax.set_title('Avg STD values as function of exp_num for different epoch sizes')
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.legend(loc = "lower right")
+    
+    autolabel(rects1, ax)
+    autolabel(rects2, ax)
+    autolabel(rects3, ax)
+    
+    textstr = "Number of participants: {}\nSeed: {}\nNumber of rounds per experiment: {}\nNumber of coins initiated for each participant: {}\nNumber of coins per winning: {} ".format(config.p_num,config.rand_seed,config.rounds_num,config.start_coins,config.win_size)
+    props = dict(boxstyle='round', facecolor='orange', alpha=0.5)
+    
+    # place a text box in upper left in axes coords
+    plt.text(-0.30, 1.15, textstr, transform=ax.transAxes, fontsize=9,
+        verticalalignment='top', bbox=props)
+        
+    fig.tight_layout()
+    
+    
+# We will create a list of Configurations types.
+# A loop will go over all the CSV files (list of strings holding the files' names) and create the Configurations and add them to the list. 
+CSV_files_list = []
+Config_list = []
+
+# choose a folder with CSV files according to the graph you want to produce
+CSV_files_list = glob.glob("PlotMinMaxAvgSTD_ExpNum/*.csv")                   
+CSV_files_num = len(CSV_files_list)
+
+if Debug is True:
+    print(CSV_files_num)
+ 
+for file_name in CSV_files_list:
+    p_ = 0
+    is_config_created = 0 #unlock
+    with open(file_name) as csvfile:
+        readCSV = csv.reader(csvfile, delimiter=',')
+        for row in readCSV:
+            if row[0]=="Parameters:":
+                continue
+            elif row[0]=="Participants number":
+                p_num = int(row[1])
+                continue
+            elif row[0]=="Rounds before dividend":
+                epoch = int(row[1])
+                continue
+            elif row[0]=="Rounds per experiment":
+                rounds_num = int(row[1])
+                continue
+            elif row[0]=="Experiments number":
+                exp_num = int(row[1])
+                continue
+            elif row[0]=="Winning size":
+                win_size = int(row[1])
+                continue
+            elif row[0]=="Start coins number":
+                start_coins = int(row[1])
+                continue
+            elif row[0]=="Random seed":
+                rand_seed = int(row[1])
+                continue
+            elif row[0]=="Final tokens for each participant at each experiment:":
+                continue
+            # after parsing all the parameters - initiate the configuration class instance
+            if is_config_created==0:
+                is_config_created = 1 #lock
+                curr_config = Configuration(
+                    p_num, # p_num
+                    epoch, # epoch
+                    rounds_num, # rounds_num
+                    exp_num, # exp_num
+                    win_size, # win_size
+                    start_coins, # start_coins
+                    rand_seed)  # rand_seed
+            
+            if row[0][0]=="p":
+                tmp_str = row[1][1:len(row[1])-1] 
+                curr_config.FinalTArray_init(p_, list(tmp_str.split(", ")))
+                p_ += 1
+               
+    Config_list.append(curr_config) 
 
 
-PlotSTD_P(Config_list[0], 1)
-PlotParticipatsStartEndRelativeTokensHist(Config_list[0], 2)
-PlotMinMaxAvgSTD_ExpNum(Config_list, 3)
-PlotMinMaxAvgSTD_RoundNum(Config_list, 4)
-P_AvgSTD_RoundNum(Config_list,1, 5)
+# ******************** start of graph production ********************
+
+participant_num = 5 # random choice...
+
+#PlotAvgSTD_ExpNum_Epoch(Config_list, 1)
+#PlotSTD_P(Config_list[0], 1)
+#PlotParticipatsStartEndRelativeTokensHist(Config_list[0], 2)
+PlotMinMaxAvgSTD_ExpNum(Config_list, 1)
+#PlotMinMaxAvgSTD_RoundNum(Config_list, 1)
+#P_Avg_and_STD_RoundNum(Config_list, participant_num, 5)
+
 plt.show()
 
 
