@@ -1,1 +1,1 @@
-py POS_Simulator.py -seed 34 
+py POS_Simulator.py -seed 72 

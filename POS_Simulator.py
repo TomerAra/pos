@@ -37,13 +37,7 @@ configurations_list = []
 ## configuration template is:
 ## configuration = [p_num, epoch, rounds_num, exp_num, win_size, start_coins]
 
-configurations_list.append([10, 1, 100, 100, 1, 1])
-configurations_list.append([10, 1, 100, 150, 1, 1])
-configurations_list.append([10, 1, 100, 200, 1, 1])
-configurations_list.append([10, 1, 100, 250, 1, 1])
-configurations_list.append([10, 1, 100, 300, 1, 1])
-
-
+configurations_list.append([2, 1, 150, 10000, 1, 3])    
 
 number_of_configurations = len(configurations_list)
 

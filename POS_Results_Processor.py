@@ -10,8 +10,24 @@ import statistics
 from statistics import mean
 import glob
 from matplotlib.offsetbox import AnchoredText
+from scipy.special import comb
+from scipy.special import gamma
 
 Debug = False
+
+"""
+Graphs plotting functions:
+
+Graph1 - prints one participant's RELATIVE tokens at the begining and at the end of the experiments, for several configurations (mean value)
+Graph2 - prints one participant's final tokens histogram and the graph of Beta distribution on the same plot
+Graph3 - prints each participant's RELATIVE tokens at the begining and at the end of the experiments (mean value)
+Graph4 - prints the standart deviation of each participant of the final number of tokens for each experiment
+Graph5 - prints the min, max and average STD of the participants as function of the exp_num of the simulation
+Graph6 - prints the min, max and average STD of the participants as function of the Rounds per experiment of the simulation
+Graph7 - prints the mean and STD of the a specific participant & exp_num as function of the Rounds per experiment of the simulation
+Graph8 - prints the average STD of the participants FOR MORE THAN ONE EPOCH as function of the exp_num of the simulation
+
+"""
 
 class Configuration:    
     
@@ -49,18 +65,131 @@ def column(matrix, i):
     
     
     
-def autolabel(rects, ax):
+def autolabel(rects, ax, last_rects=None):
     """Attach a text label above each bar in *rects*, displaying its height."""
+    i=0
     for rect in rects:
+        if(last_rects is not None):
+            tmp_last_rect = last_rects[i]
+            label_bottom = tmp_last_rect.get_height()
+            i+=1
+        else:
+            label_bottom=0
         height = rect.get_height()
         ax.annotate('{}'.format("%.3f" % height),
-                    xy=(rect.get_x() + rect.get_width() / 2, height),
+                    xy=(rect.get_x() + rect.get_width() / 2, height+label_bottom),
                     xytext=(0, 3),  # 3 points vertical offset
                     textcoords="offset points",
                     ha='center', va='bottom')
 
-# prints each participant's RELATIVE tokens at the begining and at the end of the experiments (mean value)
-def PlotParticipatsStartEndRelativeTokensHist(config, figure_num):
+
+# Graph1 - prints one participant's RELATIVE tokens at the begining and at the end of the experiments, for several configurations (mean value)
+def Graph1(Configs_list, figure_num):
+    # checking if there is more than one config
+    if CSV_files_num <= 1:
+        print("Can't generate MaxMinAvg STD graph - Not enough CSV files.")
+        sys.exit()
+    
+    start_means_1 = []
+    start_means_2 = []
+    end_means_1 = []
+    end_means_2 = []
+
+    labels = []
+    
+    labels.append("First config")
+    labels.append("Second config")
+    labels.append("Third config")
+    
+    for config in Config_list:
+        total_start_tokens = config.p_num*config.start_coins
+        total_end_tokens = (config.p_num*config.start_coins) + (config.rounds_num*config.win_size)
+        start_rel_weight = config.start_coins/total_start_tokens
+        
+        for j in range(config.p_num):
+            if(j==0):
+                start_means_1.append(start_rel_weight)
+                end_means_1.append((sum(config.final_tokens_arr[j]))/(config.exp_num*total_end_tokens))
+            if(j==1):
+                start_means_2.append(start_rel_weight)
+                end_means_2.append((sum(config.final_tokens_arr[j]))/(config.exp_num*total_end_tokens))
+
+    
+    
+    
+    x = np.arange(len(labels))  # the label locations
+    
+    if(Debug is True):
+        print(x)
+    
+    width = 0.20  # the width of the bars
+    
+    fig, ax = plt.subplots()
+    rects1 = ax.bar(x - width/2, start_means_1, width, label='P1 Mean relative weight - Start')
+    rects2 = ax.bar(x - width/2, start_means_2, width, bottom=start_means_1, label='P2 Mean relative weight - Start')
+    rects3 = ax.bar(x + width/2, end_means_1, width, label='P1 Mean relative weight - End')
+    rects4 = ax.bar(x + width/2, end_means_2, width, bottom=end_means_1, label='P2 Mean relative weight - End')
+
+    
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    ax.set_ylabel('Mean relative weights')
+    ax.set_title('Mean relative weights - Start vs End')
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.legend(loc = "lower right")
+    
+    autolabel(rects1, ax)
+    autolabel(rects2, ax, rects1)
+    autolabel(rects3, ax)
+    autolabel(rects4, ax, rects3)
+    
+    textstr = "Number of participants: {}\nSeed: {}\nNumber of rounds per experiment: {}\nNumber of experiments: {}\nNumber of coins per winning: {} ".format(config.p_num,config.rand_seed,config.rounds_num,config.exp_num,config.win_size)
+    props = dict(boxstyle='round', facecolor='orange', alpha=0.5)
+    
+    # place a text box in upper left in axes coords
+    plt.text(-0.30, 1.15, textstr, transform=ax.transAxes, fontsize=10,
+        verticalalignment='top', bbox=props)
+        
+    fig.tight_layout()                    
+                    
+
+# Graph2 - prints one participant's final tokens histogram and the graph of Beta distribution on the same plot
+def Graph2(config, figure_num):
+    e_num = config.exp_num
+        
+    total_end_tokens = (config.p_num*config.start_coins) + (config.rounds_num*config.win_size)    
+    
+    hist = []
+    norm_hist = []
+    
+    norm_tokens = []
+    for i in range(e_num):
+        norm_tokens.append(config.final_tokens_arr[0][i]/total_end_tokens)
+        
+    hist = plt.hist(norm_tokens, bins=10, rwidth=0.9, density=True)  #np.histogram(norm_tokens, bins=10)
+    plt.xticks(np.arange(10)) 
+     
+    n = config.rounds_num
+    w = config.start_coins
+    b = config.start_coins
+    
+    y = []
+        
+    x = np.linspace(0, n-1, n)
+    
+    beta = gamma(b)*gamma(w)/gamma(w+b)    
+    beta1 = np.power(beta, -1)
+
+    for k in range(n):
+        beta2 = gamma(b+k)*gamma(w+n-k)/gamma(w+b+n)
+        y.append(comb(n,k)*beta1*beta2*n)
+
+    plt.plot(x/n, y ,'r-', lw=3, alpha=0.6, label='beta pdf')
+    plt.title("Simulation histogram vs Theoretical density function")
+
+    
+# Graph3 - prints each participant's RELATIVE tokens at the begining and at the end of the experiments (mean value)
+def Graph3(config, figure_num):
     start_means = []
     end_means = []
     
@@ -95,14 +224,14 @@ def PlotParticipatsStartEndRelativeTokensHist(config, figure_num):
     props = dict(boxstyle='round', facecolor='orange', alpha=0.5)
     
     # place a text box in upper left in axes coords
-    plt.text(-0.30, 1.15, textstr, transform=ax.transAxes, fontsize=9,
+    plt.text(-0.30, 1.15, textstr, transform=ax.transAxes, fontsize=10,
         verticalalignment='top', bbox=props)
         
     fig.tight_layout()
   
   
-# prints the standart deviation of each participant of the final number of tokens for each experiment
-def PlotSTD_P(config, figure_num):
+# Graph4 - prints the standart deviation of each participant of the final number of tokens for each experiment
+def Graph4(config, figure_num):
     STD = []
     labels = []
     
@@ -135,9 +264,9 @@ def PlotSTD_P(config, figure_num):
     fig.tight_layout()
     
     
-# prints the min, max and average STD of the participants as function of the exp_num of the simulation
+# Graph5 - prints the min, max and average STD of the participants as function of the exp_num of the simulation
 # Note: can work only if there's more than one configuration 
-def PlotMinMaxAvgSTD_ExpNum(Configs_list, figure_num):
+def Graph5(Configs_list, figure_num):
     # checking if there is more than one config
     if CSV_files_num <= 1:
         print("Can't generate MaxMinAvg STD graph - Not enough CSV files.")
@@ -197,9 +326,9 @@ def PlotMinMaxAvgSTD_ExpNum(Configs_list, figure_num):
     fig.tight_layout()
    
    
-# prints the min, max and average STD of the participants as function of the Rounds per experiment of the simulation
+# Graph6 - prints the min, max and average STD of the participants as function of the Rounds per experiment of the simulation
 # Note: can work only if there's more than one configuration 
-def PlotMinMaxAvgSTD_RoundNum(Configs_list, figure_num):
+def Graph6(Configs_list, figure_num):
     # checking if there is more than one config
     if CSV_files_num <= 1:
         print("Can't generate MaxMinAvg STD graph - Not enough CSV files.")
@@ -260,9 +389,9 @@ def PlotMinMaxAvgSTD_RoundNum(Configs_list, figure_num):
     fig.tight_layout()
 
     
-# prints the mean and STD of the a specific participant & exp_num as function of the Rounds per experiment of the simulation
+# Graph7 - prints the mean and STD of the a specific participant & exp_num as function of the Rounds per experiment of the simulation
 # Note: can work only if there's more than one configuration 
-def P_Avg_and_STD_RoundNum(Configs_list, p, figure_num):
+def Graph7(Configs_list, p, figure_num):
     # checking if there is more than one config
     if CSV_files_num <= 1:
         print("Can't generate MaxMinAvg STD graph - Not enough CSV files.")
@@ -338,9 +467,9 @@ def P_Avg_and_STD_RoundNum(Configs_list, p, figure_num):
     fig.tight_layout()
 
 
-# prints the average STD of the participants FOR MORE THAN ONE EPOCH as function of the exp_num of the simulation
+# Graph8 - prints the average STD of the participants FOR MORE THAN ONE EPOCH as function of the exp_num of the simulation
 # Note: can work only if there's more than one configuration 
-def PlotAvgSTD_ExpNum_Epoch(Configs_list, figure_num):
+def Graph8(Configs_list, figure_num):
     # checking if there is more than one config
     if CSV_files_num <= 1:
         print("Can't generate MaxMinAvg STD graph - Not enough CSV files.")
@@ -426,7 +555,7 @@ CSV_files_list = []
 Config_list = []
 
 # choose a folder with CSV files according to the graph you want to produce
-CSV_files_list = glob.glob("PlotMinMaxAvgSTD_ExpNum/*.csv")                   
+CSV_files_list = glob.glob("graph2/*.csv")                   
 CSV_files_num = len(CSV_files_list)
 
 if Debug is True:
@@ -487,12 +616,15 @@ for file_name in CSV_files_list:
 
 participant_num = 5 # random choice...
 
-#PlotAvgSTD_ExpNum_Epoch(Config_list, 1)
-#PlotSTD_P(Config_list[0], 1)
-#PlotParticipatsStartEndRelativeTokensHist(Config_list[0], 2)
-PlotMinMaxAvgSTD_ExpNum(Config_list, 1)
-#PlotMinMaxAvgSTD_RoundNum(Config_list, 1)
-#P_Avg_and_STD_RoundNum(Config_list, participant_num, 5)
+# Graph1(Config_list, 1)
+Graph2(Config_list[0], 1)
+# Graph3(Config_list[0], 2)
+# Graph4(Config_list[0], 1)
+# Graph5(Config_list, 1)
+# Graph6(Config_list, 1)
+# Graph7(Config_list, participant_num, 5)
+# Graph8(Config_list, 1)
+
 
 plt.show()
 
